@@ -19,7 +19,7 @@ Usage
 
 * Add JZMenu.h and JZMenu.m to your project.
 * Add QuartzCore framework to your project.
-* #import "JZMenu.h" and #import <QuartzCore/QuartzCore.h>
+* #import "JZMenu.h" and #import <QuartzCore/QuartzCore.h
 * Define an array of menu images:
 
 ```
