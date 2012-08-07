@@ -25,36 +25,36 @@
                            //                           [UIImage imageNamed:@"Cloud-Blank"],
                            [UIImage imageNamed:@"Guitar"],
                            [UIImage imageNamed:@"iPhone"], nil];
-    JZMenu *demoMenu = [[JZMenu alloc] initWithSelectedImage:[UIImage imageNamed:@"menu_blue_se"]
-                                     unselectedImage:[UIImage imageNamed:@"menu_blue"]
-                                          menuImages:menuImages
-                                            position:JZMenuPositionLeft | JZMenuPositionRight
-                                         parentFrame:CGRectMake(0, 230, 160, 230)
-                                                menuDelegate:self];
+    JZMenu *demoMenu = [[JZMenu alloc] initWithHighlightedImage:[UIImage imageNamed:@"menu_blue_se"]
+                                                          Image:[UIImage imageNamed:@"menu_blue"]
+                                                      menuImages:menuImages
+                                                        position:JZMenuPositionLeft | JZMenuPositionRight
+                                                     parentFrame:CGRectMake(0, 230, 160, 230)
+                                                    menuDelegate:self];
     [self.view addSubview:demoMenu];
     
-    JZMenu *demoMenu2 = [[JZMenu alloc] initWithSelectedImage:[UIImage imageNamed:@"menu_green_se"]
-                                      unselectedImage:[UIImage imageNamed:@"menu_green"]
-                                           menuImages:menuImages
-                                             position:JZMenuPositionLeft | JZMenuPositionRight
-                                          parentFrame:CGRectMake(0, 0, 160, 230)
-                                                 menuDelegate:self];
+    JZMenu *demoMenu2 = [[JZMenu alloc] initWithHighlightedImage:[UIImage imageNamed:@"menu_green_se"]
+                                                           Image:[UIImage imageNamed:@"menu_green"]
+                                                      menuImages:menuImages
+                                                        position:JZMenuPositionLeft | JZMenuPositionRight
+                                                     parentFrame:CGRectMake(0, 0, 160, 230)
+                                                    menuDelegate:self];
     [self.view addSubview:demoMenu2];
     
-    JZMenu *demoMenu3 = [[JZMenu alloc] initWithSelectedImage:[UIImage imageNamed:@"menu_purple_se"]
-                                      unselectedImage:[UIImage imageNamed:@"menu_purple"]
-                                           menuImages:menuImages
-                                             position:JZMenuPositionLeft | JZMenuPositionRight
-                                          parentFrame:CGRectMake(160, 0, 160, 230)
-                                                 menuDelegate:self];
+    JZMenu *demoMenu3 = [[JZMenu alloc] initWithHighlightedImage:[UIImage imageNamed:@"menu_purple_se"]
+                                                           Image:[UIImage imageNamed:@"menu_purple"]
+                                                      menuImages:menuImages
+                                                        position:JZMenuPositionLeft | JZMenuPositionRight
+                                                     parentFrame:CGRectMake(160, 0, 160, 230)
+                                                    menuDelegate:self];
     [self.view addSubview:demoMenu3];
     
-    JZMenu *demoMenu4 = [[JZMenu alloc] initWithSelectedImage:[UIImage imageNamed:@"menu_orange_se"]
-                                      unselectedImage:[UIImage imageNamed:@"menu_orange"]
-                                           menuImages:menuImages
-                                             position:JZMenuPositionLeft | JZMenuPositionRight
-                                          parentFrame:CGRectMake(160, 230, 160, 230)
-                                                 menuDelegate:self];
+    JZMenu *demoMenu4 = [[JZMenu alloc] initWithHighlightedImage:[UIImage imageNamed:@"menu_orange_se"]
+                                                           Image:[UIImage imageNamed:@"menu_orange"]
+                                                      menuImages:menuImages
+                                                        position:JZMenuPositionLeft | JZMenuPositionRight
+                                                     parentFrame:CGRectMake(160, 230, 160, 230)
+                                                    menuDelegate:self];
     [self.view addSubview:demoMenu4];
 }
 

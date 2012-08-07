@@ -26,8 +26,8 @@ typedef char JZMenuPosition;
 
 @interface JZMenu : UIView <UIGestureRecognizerDelegate>
 
-- (id)initWithSelectedImage:(UIImage*)selectedImage
-            unselectedImage:(UIImage*)unselectedImage
+- (id)initWithHighlightedImage:(UIImage*)selectedImage
+            Image:(UIImage*)unselectedImage
                  menuImages:(NSArray*)images
                    position:(JZMenuPosition)menuPosition
                 parentFrame:(CGRect)frame

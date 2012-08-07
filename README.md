@@ -28,7 +28,7 @@ Usage
                            [UIImage imageNamed:@"iPhone"], nil];
 ```
 
-* Create the JZMenu object with the selected and unselected main menu image, your array of menu images and the parent frame. Then just add it to your view.
+* Create the JZMenu object with the normal and highlighted main menu image, your array of menu images and the parent frame. Then just add it to your view.
 
 ```
     JZMenu *demoMenu = [[JZMenu alloc] initWithSelectedImage:[UIImage imageNamed:@"menu_blue_se"]
