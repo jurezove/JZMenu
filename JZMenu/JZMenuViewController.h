@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "JZMenu.h"
 
-@interface JZMenuViewController : UIViewController
+@interface JZMenuViewController : UIViewController <JZMenuDelegate>
 
 @end

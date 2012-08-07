@@ -16,12 +16,22 @@ enum {
 };
 typedef char JZMenuPosition;
 
+@class JZMenu;
+@protocol JZMenuDelegate <NSObject>
+
+- (BOOL)canSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
+- (void)didSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
+
+@end
+
 @interface JZMenu : UIView <UIGestureRecognizerDelegate>
 
 - (id)initWithSelectedImage:(UIImage*)selectedImage
             unselectedImage:(UIImage*)unselectedImage
                  menuImages:(NSArray*)images
                    position:(JZMenuPosition)menuPosition
-                parentFrame:(CGRect)frame;
+                parentFrame:(CGRect)frame
+                menuDelegate:(id<JZMenuDelegate>)menuDelegate;
 
 @end
+
