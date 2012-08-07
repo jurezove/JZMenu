@@ -23,6 +23,10 @@ typedef char JZMenuPosition;
 - (BOOL)canSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 - (void)didSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 
+@optional
+- (void)menuActivated:(JZMenu*)menu;
+- (void)menuDeactivated:(JZMenu*)menu;
+
 @end
 
 @interface JZMenu : UIView <UIGestureRecognizerDelegate>

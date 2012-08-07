@@ -303,6 +303,9 @@
             // The gesture is long press, just highlight the item
             [self highlightMenuItemAtPoint:point];
         }
+        if (self.menuDelegate && [self.menuDelegate respondsToSelector:@selector(menuActivated:)]) {
+            [self.menuDelegate menuActivated:self];
+        }
     } else if ((gesture.state == UIGestureRecognizerStateEnded || gesture.state == UIGestureRecognizerStateCancelled) && isHighlighted) { // Only recognize the gesture if the menu item is highlighted
         [self resetMove];
         // If the gesture isn't cancelled, we notify the delegate
@@ -313,6 +316,9 @@
                     [self.menuDelegate didSelectItemAtIndex:highlightedItemIndex inMenu:self];
                 }
             }
+        }
+        if (self.menuDelegate && [self.menuDelegate respondsToSelector:@selector(menuDeactivated:)]) {
+            [self.menuDelegate menuDeactivated:self];
         }
     } else if (gesture == pan && isHighlighted) {
         point.x += diffX;
