@@ -40,6 +40,15 @@ Usage
                                                 menuDelegate:self];
 ```
 
+* You can change the position of the main menu image by combining JZMenuPosition flags.
+
+```
+JZMenuPositionTop
+JZMenuPositionRight
+JZMenuPositionBottom
+JZMenuPositionLeft
+```
+
 * Implement the delegate methods:
 
 ```
