@@ -12,6 +12,7 @@
 #define kAnimationDuration 0.25f
 #define kAnimationDelay 0.1f
 #define kMenuItemImageSize 80.0f
+#define kMenuItemLabelPadding 10.0f
 #define kMainMenuTransform CGAffineTransformMakeScale(2.5, 2.5)
 
 // Colors for the menu background
@@ -28,45 +29,112 @@
     // Origin difference for smother panning
     float diffX, diffY;
     NSMutableArray *menuItems;
+    
+//    int currentItemIndex;
 }
 
-@property (nonatomic, strong) UIImageView *unselectedImageView;
-@property (nonatomic, strong) UIImageView *selectedImageView;
+@property (nonatomic, strong) UIView* displayItem;
+@property (nonatomic, strong) UIView* highlightedItem;
 @property (nonatomic) CGRect parentFrame;
 @property (nonatomic) JZMenuPosition position;
 @property (nonatomic, strong) UIView *menuView;
 @property (nonatomic, weak) id<JZMenuDelegate> menuDelegate;
+@property (nonatomic) int currentItemIndex;
+
+- (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
+- (void)leftHoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 
 @end
 
 @implementation JZMenu
 
-@synthesize selectedImageView;
-@synthesize unselectedImageView;
+@synthesize displayItem = _displayItem;
+@synthesize highlightedItem = _highlightedItem;
 @synthesize parentFrame;
 @synthesize position;
 @synthesize menuView = _menuView;
 @synthesize menuDelegate = _menuDelegate;
+@synthesize currentItemIndex = _currentItemIndex;
 
-- (id)initWithHighlightedImage:(UIImage*)selectedImage
-            Image:(UIImage*)unselectedImage
-                 menuImages:(NSArray *)images
-                   position:(JZMenuPosition)menuPosition
-                parentFrame:(CGRect)frame
-                   menuDelegate:(id<JZMenuDelegate>)menuDelegate {
+- (id)initWithHighlightedItem:(id)highlightedItem
+                  displayItem:(id)displayItem
+                    menuItems:(NSArray *)items
+                     position:(JZMenuPosition)menuPosition
+                  parentFrame:(CGRect)frame
+                 menuDelegate:(id<JZMenuDelegate>)menuDelegate {
     if (self = [super initWithFrame:frame]) {
-        self.selectedImageView = [[UIImageView alloc] initWithImage:selectedImage];
-        self.unselectedImageView = [[UIImageView alloc] initWithImage:unselectedImage];
+        [self createDisplayItem:displayItem];
+        [self createHighlightedItem:highlightedItem];
+//        self.highlightedItem = [[UIImageView alloc] initWithImage:highlightedItem];
+//        self.normalItem = [[UIImageView alloc] initWithImage:normalItem];
         self.parentFrame = frame;
         self.position = menuPosition;
         self.menuDelegate = menuDelegate;
-        [self createMenuWith:images];
+        [self createMenuWith:items];
         [self config];
     }
     return self;
 }
 
+- (void)setCurrentItemIndex:(int)currentItemIndex {
+    if (_currentItemIndex != currentItemIndex) {
+        // Handle hovering
+        [self leftHoverOnItemAtIndex:_currentItemIndex inMenu:self];
+        _currentItemIndex = currentItemIndex;
+        [self hoverOnItemAtIndex:_currentItemIndex inMenu:self];
+        
+        if ([self.menuDelegate respondsToSelector:@selector(hoverOnItemAtIndex:inMenu:)])
+            [self.menuDelegate hoverOnItemAtIndex:_currentItemIndex inMenu:self];
+    }
+}
+
 #pragma mark - Config
+
+- (void)createDisplayItem:(id)displayItem {
+    CGPoint originPoint = [self originPoint];
+    CGSize size = CGSizeMake(kStartMenuItemSize, kStartMenuItemSize);
+    if ([displayItem isKindOfClass:[UIImage class]]) {
+        self.displayItem = [[UIImageView alloc] initWithImage:displayItem];
+        [(UIImageView*)self.displayItem setContentMode:UIViewContentModeScaleAspectFit];
+        [(UIImageView*)self.displayItem setFrame:CGRectMake(originPoint.x, originPoint.y, size.width, size.height)];
+        [self addSubview:self.displayItem];
+    } else if ([displayItem isKindOfClass:[NSString class]]) {
+        CGRect labelRect = CGRectMake(kMenuItemLabelPadding,
+                                      kMenuItemLabelPadding,
+                                      self.frame.size.width - 2 * kMenuItemLabelPadding,
+                                      self.frame.size.height - 2 * kMenuItemLabelPadding);
+        self.displayItem = [[UILabel alloc] initWithFrame:labelRect];
+        self.displayItem.backgroundColor = [UIColor clearColor];
+        [(UILabel*)self.displayItem setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:20.0f]];
+        [(UILabel*)self.displayItem setTextAlignment:UITextAlignmentCenter];
+        [(UILabel*)self.displayItem setText:displayItem];
+        [self addSubview:self.displayItem];
+    }
+}
+
+- (void)createHighlightedItem:(id)highlightedItem {
+    CGSize size = CGSizeMake(kStartMenuItemSize, kStartMenuItemSize);
+    CGPoint originPoint = [self originPoint];
+    if ([highlightedItem isKindOfClass:[UIImage class]]) {
+        self.highlightedItem = [[UIImageView alloc] initWithImage:highlightedItem];
+        [(UIImageView*)self.highlightedItem setContentMode:UIViewContentModeScaleAspectFit];
+        [(UIImageView*)self.highlightedItem setFrame:CGRectMake(originPoint.x, originPoint.y, size.width, size.height)];
+        [self addSubview:self.highlightedItem];
+        [self.highlightedItem setHidden:YES];
+    } else if ([highlightedItem isKindOfClass:[NSString class]]) {
+        CGRect labelRect = CGRectMake(kMenuItemLabelPadding,
+                                      kMenuItemLabelPadding,
+                                      self.frame.size.width - 2 * kMenuItemLabelPadding,
+                                      self.frame.size.height - 2 * kMenuItemLabelPadding);
+        self.highlightedItem = [[UILabel alloc] initWithFrame:labelRect];
+        self.highlightedItem.backgroundColor = [UIColor clearColor];
+        [(UILabel*)self.highlightedItem setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:20.0f]];
+        [(UILabel*)self.highlightedItem setTextAlignment:UITextAlignmentCenter];
+        [(UILabel*)self.highlightedItem setText:highlightedItem];
+        [self addSubview:self.highlightedItem];
+        [self.highlightedItem setHidden:YES];
+    }
+}
 
 - (CGPoint)centerPointForOrigin:(CGPoint)origin {
     return CGPointMake(origin.x + kStartMenuItemSize / 2, origin.y + kStartMenuItemSize / 2);
@@ -95,29 +163,57 @@
 }
 
 - (void)config {
-    // Determine the frame of the menu
-    CGSize size = CGSizeMake(kStartMenuItemSize, kStartMenuItemSize);
-    CGPoint originPoint = [self originPoint];
-    self.unselectedImageView.contentMode = self.selectedImageView.contentMode = UIViewContentModeScaleAspectFit;
-    self.unselectedImageView.frame = self.selectedImageView.frame = CGRectMake(originPoint.x, originPoint.y, size.width, size.height);
-    self.selectedImageView.hidden = YES;
-    [self addSubview:self.selectedImageView];
-    [self addSubview:self.unselectedImageView];
     
     // Add gesture recognizers
     longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleGesture:)];
     longPress.minimumPressDuration = kAnimationDuration;
     longPress.delegate = self;
+    longPress.cancelsTouchesInView = NO;
     [self addGestureRecognizer:longPress];
     
     pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleGesture:)];
     pan.delegate = self;
+    pan.cancelsTouchesInView = NO;
     [self addGestureRecognizer:pan];
     
     self.backgroundColor = [UIColor clearColor];
 }
 
-- (void)createMenuWith:(NSArray*)images {
+- (void)createMenuItemWith:(id)object andFrame:(CGRect)frame {
+    // Menu item
+    UIView *menuItem = [[UIView alloc] initWithFrame:frame];
+    menuItem.layer.borderColor = [UIColor whiteColor].CGColor;
+    menuItem.layer.borderWidth = 1.0f;
+    menuItem.backgroundColor = kMenuColor;
+    
+    if ([object isKindOfClass:[UIImage class]]) {
+        // Menu image
+        CGRect imageRect = CGRectMake(self.frame.size.width / 2 - kMenuItemImageSize / 2,
+                                      frame.size.height / 2 - kMenuItemImageSize / 2,
+                                      kMenuItemImageSize,
+                                      kMenuItemImageSize);
+        UIImageView *image = [[UIImageView alloc] initWithFrame:imageRect];
+        image.image = object;
+        image.contentMode = UIViewContentModeCenter;
+        [menuItem addSubview:image];
+    } else if ([object isKindOfClass:[NSString class]]) {
+        CGRect labelRect = CGRectMake(kMenuItemLabelPadding,
+                                      kMenuItemLabelPadding,
+                                      frame.size.width - 2 * kMenuItemLabelPadding,
+                                      frame.size.height - 2 * kMenuItemLabelPadding);
+        UILabel *label = [[UILabel alloc] initWithFrame:labelRect];
+        label.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:20.0f];
+        label.textAlignment = UITextAlignmentCenter;
+        label.text = object;
+        label.backgroundColor = [UIColor clearColor];
+        [menuItem addSubview:label];
+    }
+    
+    [_menuView addSubview:menuItem];
+    [menuItems addObject:menuItem];
+}
+
+- (void)createMenuWith:(NSArray*)items {
     _menuView = [[UIView alloc] initWithFrame:self.bounds];
     _menuView.backgroundColor = [UIColor clearColor];
     _menuView.hidden = YES;
@@ -125,32 +221,16 @@
     [self sendSubviewToBack:_menuView];
     
     // Menu items
-    menuItems = [[NSMutableArray alloc] initWithCapacity:images.count];
-    float sizeOfMenuItem = (float)self.frame.size.height / images.count;
-    CGRect imageRect = CGRectMake(self.frame.size.width / 2 - kMenuItemImageSize / 2,
-                                  sizeOfMenuItem / 2 - kMenuItemImageSize / 2,
-                                  kMenuItemImageSize,
-                                  kMenuItemImageSize);
-    for (int i = 0; i < images.count; i++) {
+    menuItems = [[NSMutableArray alloc] initWithCapacity:items.count];
+    float sizeOfMenuItem = (float)self.frame.size.height / items.count;
+    
+    for (int i = 0; i < items.count; i++) {
         CGRect frame = CGRectMake(0,
                                   i * sizeOfMenuItem,
                                   self.frame.size.width,
                                   sizeOfMenuItem);
         
-        // Menu item
-        UIView *menuItem = [[UIView alloc] initWithFrame:frame];
-        menuItem.layer.borderColor = [UIColor whiteColor].CGColor;
-        menuItem.layer.borderWidth = 1.0f;
-        menuItem.backgroundColor = kMenuColor;
-        
-        // Menu image
-        UIImageView *image = [[UIImageView alloc] initWithFrame:imageRect];
-        image.image = [images objectAtIndex:i];
-        image.contentMode = UIViewContentModeCenter;
-        [menuItem addSubview:image];
-        
-        [_menuView addSubview:menuItem];
-        [menuItems addObject:menuItem];
+        [self createMenuItemWith:[items objectAtIndex:i] andFrame:frame];
     }
 }
 
@@ -192,18 +272,14 @@
 }
 
 - (void)highlightMenuItemAtPoint:(CGPoint)point {
-    [self layoutMenuItems:[self highlightedItemIndexAt:point]];
+    int newHighlightedItemIndex = [self highlightedItemIndexAt:point];
+    if (newHighlightedItemIndex != self.currentItemIndex)
+        [self layoutMenuItems:newHighlightedItemIndex];
 }
 
 - (void)layoutMenuItems:(NSInteger)highlightedItemIndex {
-    float y = 0;
-    float menuItemSize = (self.frame.size.height / menuItems.count);
+    self.currentItemIndex = highlightedItemIndex;
     for (int i = 0; i < menuItems.count; i++) {
-        CGRect frame = CGRectMake(0,
-                                   y += frame.size.height,
-                                   self.frame.size.width,
-                                   menuItemSize);
-        
         [UIView animateWithDuration:kAnimationDuration
                          animations:^{
                              if (i == highlightedItemIndex) {
@@ -231,18 +307,18 @@
         isHighlighted = YES;
         
         [self showMenu];
-        self.selectedImageView.alpha = 0;
-        self.selectedImageView.hidden = NO;
+        self.highlightedItem.alpha = 0;
+        self.highlightedItem.hidden = NO;
         [UIView animateWithDuration:kAnimationDuration
                               delay:0
                             options:UIViewAnimationCurveEaseOut | UIViewAnimationOptionAllowUserInteraction
                          animations:^{
-                             self.selectedImageView.transform = kMainMenuTransform;
-                             self.unselectedImageView.alpha = 0;
-                             self.selectedImageView.alpha = 1;
+                             self.highlightedItem.transform = kMainMenuTransform;
+                             self.displayItem.alpha = 0;
+                             self.highlightedItem.alpha = 1;
                          } completion:^(BOOL finished) {
                              if (finished) {
-                                 self.unselectedImageView.hidden = YES;
+                                 self.displayItem.hidden = YES;
                              }
                          }];
     } else {
@@ -251,18 +327,18 @@
         isHighlighted = NO;
         
         [self hideMenu];
-        self.unselectedImageView.alpha = 0;
-        self.unselectedImageView.hidden = NO;
+        self.displayItem.alpha = 0;
+        self.displayItem.hidden = NO;
         [UIView animateWithDuration:kAnimationDuration
                               delay:0
                             options:UIViewAnimationCurveEaseOut | UIViewAnimationOptionAllowUserInteraction
                          animations:^{
-                             self.selectedImageView.transform = CGAffineTransformIdentity;
-                             self.selectedImageView.alpha = 0;
-                             self.unselectedImageView.alpha = 1;
+                             self.highlightedItem.transform = CGAffineTransformIdentity;
+                             self.highlightedItem.alpha = 0;
+                             self.displayItem.alpha = 1;
                          } completion:^(BOOL finished) {
                              if (finished) {
-                                 self.selectedImageView.hidden = YES;
+                                 self.highlightedItem.hidden = YES;
                              }
                          }];
     }
@@ -274,18 +350,18 @@
 }
 
 - (void)moveTo:(CGPoint)point animated:(BOOL)animated {
-    if (!CGPointEqualToPoint(self.unselectedImageView.center, point) ||
-        !CGPointEqualToPoint(self.selectedImageView.center, point)) {
+    if (!CGPointEqualToPoint(self.displayItem.center, point) ||
+        !CGPointEqualToPoint(self.highlightedItem.center, point)) {
         if (animated) {
             [UIView animateWithDuration:kAnimationDuration
                                   delay:kAnimationDelay
                                 options:UIViewAnimationOptionAllowUserInteraction
                              animations:^{
-                                 self.unselectedImageView.center = point;
-                                 self.selectedImageView.center = point;
+                                 self.displayItem.center = point;
+                                 self.highlightedItem.center = point;
                              } completion:nil];
         } else {
-            self.unselectedImageView.center = self.selectedImageView.center = point;
+            self.displayItem.center = self.highlightedItem.center = point;
         }
         [self highlightMenuItemAtPoint:point];
     }
@@ -296,9 +372,9 @@
     if (gesture.state == UIGestureRecognizerStateBegan) {
         [self changeSelection:YES];
         if (gesture == pan) {
-            CGPoint pointInSelf = [gesture locationInView:self.unselectedImageView];
-            diffX = (self.unselectedImageView.frame.size.width / 2 - pointInSelf.x);
-            diffY = (self.unselectedImageView.frame.size.height / 2 - pointInSelf.y);
+            CGPoint pointInSelf = [gesture locationInView:self.displayItem];
+            diffX = (self.displayItem.frame.size.width / 2 - pointInSelf.x);
+            diffY = (self.displayItem.frame.size.height / 2 - pointInSelf.y);
         } else {
             // The gesture is long press, just highlight the item
             [self highlightMenuItemAtPoint:point];
@@ -329,8 +405,8 @@
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
     CGPoint test = [touch locationInView:self];
-    if (CGRectContainsPoint(self.unselectedImageView.frame, test)
-        || CGRectContainsPoint(self.selectedImageView.frame, test)) {
+    if (CGRectContainsPoint(self.displayItem.frame, test)
+        || CGRectContainsPoint(self.highlightedItem.frame, test)) {
         return YES;
     }
     return NO;
@@ -343,9 +419,35 @@
 - (void)dealloc {
     [menuItems removeAllObjects];
     menuItems = nil;
-    selectedImageView = nil;
-    unselectedImageView = nil;
+    self.highlightedItem = nil;
+    self.displayItem = nil;
     self.menuView = nil;
+}
+
+#pragma mark - Selecting subviews
+
+- (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu *)menu {
+    UIView *item = [menuItems objectAtIndex:index];
+
+    // Start timer countdown for selection
+}
+
+- (void)leftHoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu *)menu{
+//    UIView *item = [menuItems objectAtIndex:index];
+//    item.transform = CGAffineTransformIdentity;
+}
+
+#pragma mark - Some stuff to handle subview touches
+
+-(id)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (CGRectContainsPoint(self.displayItem.frame, point) ||
+        CGRectContainsPoint(self.highlightedItem.frame, point))
+        return self;
+    UIView *hitView = [super hitTest:point withEvent:event];
+    if (hitView == self)
+        return nil;
+    else
+        return hitView;
 }
 
 @end

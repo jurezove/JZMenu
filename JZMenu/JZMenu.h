@@ -26,17 +26,18 @@ typedef char JZMenuPosition;
 @optional
 - (void)menuActivated:(JZMenu*)menu;
 - (void)menuDeactivated:(JZMenu*)menu;
+- (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 
 @end
 
 @interface JZMenu : UIView <UIGestureRecognizerDelegate>
 
-- (id)initWithHighlightedImage:(UIImage*)selectedImage
-            Image:(UIImage*)unselectedImage
-                 menuImages:(NSArray*)images
-                   position:(JZMenuPosition)menuPosition
-                parentFrame:(CGRect)frame
-                menuDelegate:(id<JZMenuDelegate>)menuDelegate;
+- (id)initWithHighlightedItem:(id)highlightedItem
+                  displayItem:(id)displayItem
+                    menuItems:(NSArray*)images
+                     position:(JZMenuPosition)menuPosition
+                  parentFrame:(CGRect)frame
+                 menuDelegate:(id<JZMenuDelegate>)menuDelegate;
 
 @end
 
