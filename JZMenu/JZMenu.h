@@ -20,17 +20,21 @@ typedef char JZMenuPosition;
 @class JZMenu;
 @protocol JZMenuDelegate <NSObject>
 
+@optional
 - (BOOL)canSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 - (void)didSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
-
-@optional
 - (void)menuActivated:(JZMenu*)menu;
 - (void)menuDeactivated:(JZMenu*)menu;
 - (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
+- (BOOL)animateOnLongHover:(NSInteger)index inMenu:(JZMenu*)menu;
+- (void)longHoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 
 @end
 
 @interface JZMenu : UIView <UIGestureRecognizerDelegate>
+
+@property (nonatomic, strong) UILongPressGestureRecognizer *longPress;
+@property (nonatomic, strong) UIPanGestureRecognizer *pan;
 
 - (id)initWithHighlightedItem:(id)highlightedItem
                   displayItem:(id)displayItem
