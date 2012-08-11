@@ -36,12 +36,15 @@ typedef char JZMenuPosition;
 @property (nonatomic, strong) UILongPressGestureRecognizer *longPress;
 @property (nonatomic, strong) UIPanGestureRecognizer *pan;
 
-- (id)initWithHighlightedItem:(id)highlightedItem
-                  displayItem:(id)displayItem
+- (id)initWithHighlightedItemData:(id)highlightedItem
+                  displayItemData:(id)displayItem
                     menuItems:(NSArray*)images
                      position:(JZMenuPosition)menuPosition
                   parentFrame:(CGRect)frame
                  menuDelegate:(id<JZMenuDelegate>)menuDelegate;
+
+- (void)changeDisplayItemWith:(id)displayItemData;
+- (void)changeHighlightedItemWith:(id)highlightedItemData;
 
 @end
 

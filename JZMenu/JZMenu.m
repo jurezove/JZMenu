@@ -18,8 +18,9 @@
 
 // Colors for the menu background
 #define RGB(r,g,b, a) [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:a]
-#define kMenuColor RGB(0, 0, 0, 0.7)
+#define kMenuColor RGB(0, 0, 0, 0.4)
 #define kMenuHighlightedColor RGB(255, 255, 255, 0.5)
+#define kMenuBlinkColor RGB(255, 255, 255, 1.0f)
 #define kMenuCantHighlightColor RGB(255, 0, 0, 0.5)
 #define kSubmenuTimerInterval 1.0f
 #define kUserInfoDictKey @"menuItem"
@@ -67,19 +68,18 @@
 @synthesize parentMenu;
 @synthesize origItems;
 
-- (id)initWithHighlightedItem:(id)highlightedItem
-                  displayItem:(id)displayItem
-                    menuItems:(NSArray *)items
-                     position:(JZMenuPosition)menuPosition
-                  parentFrame:(CGRect)frame
-                 menuDelegate:(id<JZMenuDelegate>)menuDelegate {
+- (id)initWithHighlightedItemData:(id)highlightedData
+                  displayItemData:(id)displayData
+                        menuItems:(NSArray *)items
+                         position:(JZMenuPosition)menuPosition
+                      parentFrame:(CGRect)frame
+                     menuDelegate:(id<JZMenuDelegate>)menuDelegate {
     if (self = [super initWithFrame:frame]) {
         self.parentFrame = frame;
         self.position = menuPosition;
         self.menuDelegate = menuDelegate;
-        [self createDisplayItem:displayItem];
-        [self createHighlightedItem:highlightedItem];
-        self.highlightedItem.hidden = YES;
+        self.displayItem = [self configureMainItem:displayData highlighted:NO];
+        self.highlightedItem = [self configureMainItem:highlightedData highlighted:YES];
         self.origItems = items;
         _currentItemIndex = -1;
         [self createMenuWith:items];
@@ -100,11 +100,64 @@
     }
 }
 
-//- (void)setFrame:(CGRect)frame {
-//    [super setFrame:frame];
-////    [self collapseMenusToFrame:frame];
-////    [self resizeItem:self.displayItem];
-//}
+- (void)changeDisplayItemWith:(id)displayItemData {
+    CGPoint center = self.displayItem.center;
+    [UIView animateWithDuration:kAnimationDuration
+                          delay:kAnimationDuration * 2
+                        options:UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+                         self.displayItem.alpha = 0;
+                     } completion:^(BOOL finished) {
+                         if (finished) {
+                             if ([self.displayItem isKindOfClass:[UILabel class]]) {
+                                 [(UILabel*)self.displayItem setText:displayItemData];
+//                                 [self.displayItem sizeToFit];
+                                 [self resizeItem:self.displayItem];
+                                 self.displayItem.center = center;
+                             } else if ([self.displayItem isKindOfClass:[UIImageView class]]) {
+                                 [(UIImageView*)self.displayItem setImage:displayItemData];
+                             }
+
+                             [UIView animateWithDuration:kAnimationDuration
+                                              animations:^{
+                                                  self.displayItem.alpha = 1;
+                                              }];
+                         }
+                     }];
+}
+
+- (void)changeHighlightedItemWith:(id)highlightedItemData {
+//     self.highlightedItem = [self configureMainItem:highlightedItemData highlighted:YES];
+    
+    [UIView animateWithDuration:kAnimationDuration
+                          delay:kAnimationDuration
+                        options:UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+                         self.highlightedItem.alpha = 0;
+                     } completion:^(BOOL finished) {
+                         if (finished) {
+                             if ([self.highlightedItem isKindOfClass:[UILabel class]]) {
+                                 // This still ned fixing
+                                 [(UILabel*)self.highlightedItem setText:highlightedItemData];
+
+//                                 float newX = center.x + (frame.size.width - self.highlightedItem.frame.size.width) / 2;
+//                                 float newY = center.y + (frame.size.height - self.highlightedItem.frame.size.height) / 2;
+//                                 CGPoint newCenter = CGPointMake(newX, newY);
+//                                 diffX -= fabs(center.x - newCenter.x);
+//                                 diffY -= fabs(center.y - newCenter.y);
+//                                 NSLog(@"old frame: %@, new frame: %@", NSStringFromCGRect(frame), NSStringFromCGRect(self.highlightedItem.frame));
+//                                 self.highlightedItem.center = newCenter;
+                             } else if ([self.highlightedItem isKindOfClass:[UIImageView class]]) {
+                                 [(UIImageView*)self.highlightedItem setImage:highlightedItemData];
+                                 
+                             }
+                             [UIView animateWithDuration:kAnimationDuration
+                                              animations:^{
+                                                  self.highlightedItem.alpha = 1;
+                                              }];
+                         }
+                     }];
+}
 
 #pragma mark - Config
 
@@ -136,7 +189,6 @@
                                       kMenuItemLabelPadding,
                                       self.frame.size.width - 2 * kMenuItemLabelPadding,
                                       self.frame.size.height - 2 * kMenuItemLabelPadding);
-//        self.displayItem = [[UILabel alloc] initWithFrame:labelRect];
         item.frame = labelRect;
         [item sizeToFit];
         item.frame = [self addPaddingTo:item.frame];
@@ -144,38 +196,28 @@
     }
 }
 
-- (void)createDisplayItem:(id)displayItem {
-    if ([displayItem isKindOfClass:[UIImage class]]) {
-        self.displayItem = [[UIImageView alloc] initWithImage:displayItem];
-        [(UIImageView*)self.displayItem setContentMode:UIViewContentModeScaleAspectFit];
-        [self addSubview:self.displayItem];
-    } else if ([displayItem isKindOfClass:[NSString class]]) {
-        self.displayItem = [[UILabel alloc] init];
-        self.displayItem.backgroundColor = [UIColor clearColor];
-        [(UILabel*)self.displayItem setFont:kLabelFont];
-        [(UILabel*)self.displayItem setTextAlignment:[self alignmentForPosition]];
-        [(UILabel*)self.displayItem setText:displayItem];
-        [self addSubview:self.displayItem];
+- (UIView*)configureMainItem:(id)data highlighted:(BOOL)highlighted {
+    UIView *item;
+    if ([data isKindOfClass:[UIImage class]]) {
+        item = [[UIImageView alloc] initWithImage:data];
+        [(UIImageView*)item setContentMode:UIViewContentModeScaleAspectFit];
+        [self addSubview:item];
+    } else if ([data isKindOfClass:[NSString class]]) {
+        item = [[UILabel alloc] init];
+        item.backgroundColor = [UIColor clearColor];
+        if (highlighted)
+            [(UILabel*)item setFont:kLabelFontHighlighted];
+        else
+            [(UILabel*)item setFont:kLabelFont];
+        [(UILabel*)item setTextAlignment:[self alignmentForPosition]];
+        [(UILabel*)item setText:data];
+        [self addSubview:item];
     }
-    [self resizeItem:self.displayItem];
-}
-
-- (void)createHighlightedItem:(id)highlightedItem {
-    if ([highlightedItem isKindOfClass:[UIImage class]]) {
-        self.highlightedItem = [[UIImageView alloc] initWithImage:highlightedItem];
-        [(UIImageView*)self.highlightedItem setContentMode:UIViewContentModeScaleAspectFit];
-        [self addSubview:self.highlightedItem];
-        [self.highlightedItem setHidden:YES];
-    } else if ([highlightedItem isKindOfClass:[NSString class]]) {
-        self.highlightedItem = [[UILabel alloc] init];
-        self.highlightedItem.backgroundColor = [UIColor clearColor];
-        [(UILabel*)self.highlightedItem setFont:kLabelFontHighlighted];
-        [(UILabel*)self.highlightedItem setTextAlignment:[self alignmentForPosition]];
-        [(UILabel*)self.highlightedItem setText:highlightedItem];
-        [self.highlightedItem setHidden:YES];
-        [self addSubview:self.highlightedItem];
-    }
-    [self resizeItem:self.highlightedItem];
+    [self resizeItem:item];
+    
+    item.hidden = highlighted;
+    
+    return item;
 }
 
 - (CGPoint)centerPointForOrigin:(CGPoint)origin {
@@ -248,9 +290,10 @@
         label.textAlignment = UITextAlignmentCenter;
         label.text = object;
         label.backgroundColor = [UIColor clearColor];
+        label.textColor = [UIColor blackColor];
         [menuItem addSubview:label];
     } else if ([object isKindOfClass:[JZMenu class]]) {
-        
+        // Create a submenu with display item of the object's menu
         [[object displayItem] setFrame:CGRectMake(0,
                                     0,
                                     frame.size.width,
@@ -258,7 +301,6 @@
         [object setLongPress:self.longPress];
         [object setPan:self.pan];
         [menuItem addSubview:[object displayItem]];
-        
     }
     
     [_menuView addSubview:menuItem];
@@ -403,6 +445,12 @@
     _currentItemIndex = -1;
     [self changeSelection:NO];
     
+    // Submenu stuff
+    [submenuTimer invalidate];
+    submenuTimer = nil;
+//    [self deactivateSubmenu];
+    
+    // Parent menu stuff
     if (parentMenu) {
         parentMenu.displayItem.center = self.displayItem.center;
         parentMenu.highlightedItem.center = self.highlightedItem.center;
@@ -548,12 +596,16 @@
 }
 
 - (void)deactivateSubmenu {
+    NSLog(@"Deactivating submenu");
     [activeSubmenu removeFromSuperview];
     activeSubmenu = nil;
 }
 
 - (void)longHover:(NSTimer*)timer {
+    NSLog(@"Long hover");
+     // Get item and handle long press according to class
     NSInteger itemIndex = (NSInteger)[[[timer userInfo] objectForKey:kUserInfoDictKey] intValue];
+    
     UIView *menuItem = [menuItems objectAtIndex:itemIndex];
     id menu = [origItems objectAtIndex:itemIndex];
     if ([menu isKindOfClass:[JZMenu class]]) {
@@ -563,10 +615,11 @@
                             options:UIViewAnimationOptionRepeat
                          animations:^{
                              [UIView setAnimationRepeatCount:2.0f];
-                             menuItem.backgroundColor = [UIColor clearColor];
+                             menuItem.backgroundColor = kMenuBlinkColor;
                              menuItem.backgroundColor = originalColor;
                          } completion:^(BOOL finished) {
-                             [self activateSubmenu:menu];
+                             if (submenuTimer && finished)
+                                 [self activateSubmenu:menu];
                          }];
     } else {
         if ([self.menuDelegate respondsToSelector:@selector(longHoverOnItemAtIndex:inMenu:)] &&

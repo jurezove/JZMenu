@@ -25,8 +25,8 @@
                            //                           [UIImage imageNamed:@"Cloud-Blank"],
                            [UIImage imageNamed:@"Guitar"],
                            [UIImage imageNamed:@"iPhone"], nil];
-    JZMenu *demoMenu = [[JZMenu alloc] initWithHighlightedItem:@"test"
-                                                          displayItem:@"test 2"
+    JZMenu *demoMenu = [[JZMenu alloc] initWithHighlightedItemData:@"test"
+                                                          displayItemData:@"test 2"
                                                       menuItems:menuImages
                                                         position:JZMenuPositionLeft | JZMenuPositionRight
                                                      parentFrame:self.view.bounds
