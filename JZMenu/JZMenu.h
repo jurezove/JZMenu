@@ -28,6 +28,7 @@ typedef char JZMenuPosition;
 - (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 - (BOOL)animateOnLongHover:(NSInteger)index inMenu:(JZMenu*)menu;
 - (void)longHoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
+- (void)menuTapped:(JZMenu*)menu;
 
 @end
 
@@ -35,6 +36,7 @@ typedef char JZMenuPosition;
 
 @property (nonatomic, strong) UILongPressGestureRecognizer *longPress;
 @property (nonatomic, strong) UIPanGestureRecognizer *pan;
+@property (nonatomic, strong) UITapGestureRecognizer *tap;
 
 - (id)initWithHighlightedItemData:(id)highlightedItem
                   displayItemData:(id)displayItem

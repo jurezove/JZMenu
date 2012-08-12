@@ -63,7 +63,7 @@
 @synthesize menuView = _menuView;
 @synthesize menuDelegate = _menuDelegate;
 @synthesize currentItemIndex = _currentItemIndex;
-@synthesize longPress, pan;
+@synthesize longPress, pan, tap;
 @synthesize activeSubmenu;
 @synthesize parentMenu;
 @synthesize origItems;
@@ -259,6 +259,11 @@
     pan.delegate = self;
     pan.cancelsTouchesInView = NO;
     [self addGestureRecognizer:pan];
+    
+    tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
+    tap.delegate = self;
+    tap.cancelsTouchesInView = NO;
+    [self addGestureRecognizer:tap];
     
     self.backgroundColor = [UIColor clearColor];
 }
@@ -548,6 +553,11 @@
         point.y += diffY;
         [self moveTo:point animated:NO withCallback:nil];
     }
+}
+
+- (void)handleTap:(UITapGestureRecognizer*)tap {
+    if ([self.menuDelegate respondsToSelector:@selector(menuTapped:)])
+        [self.menuDelegate menuTapped:self];
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
