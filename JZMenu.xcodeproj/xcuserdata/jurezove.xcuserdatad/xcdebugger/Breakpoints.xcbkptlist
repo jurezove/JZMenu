@@ -13,7 +13,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "543"
          endingLineNumber = "543"
-         landmarkName = "-handleGesture:"
+         landmarkName = "-moveTo:animated:withCallback:"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
@@ -26,7 +26,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "558"
          endingLineNumber = "558"
-         landmarkName = "-gestureRecognizer:shouldReceiveTouch:"
+         landmarkName = "-handleGesture:"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
@@ -39,7 +39,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "557"
          endingLineNumber = "557"
-         landmarkName = "-gestureRecognizer:shouldReceiveTouch:"
+         landmarkName = "-handleGesture:"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>

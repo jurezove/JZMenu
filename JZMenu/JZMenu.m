@@ -36,6 +36,7 @@
     NSMutableArray *menuItems;
     
     NSTimer *submenuTimer;
+    
 }
 
 @property (nonatomic, strong) UIView* displayItem;
@@ -43,11 +44,12 @@
 @property (nonatomic) CGRect parentFrame;
 @property (nonatomic) JZMenuPosition position;
 @property (nonatomic, strong) UIView *menuView;
-@property (nonatomic, weak) id<JZMenuDelegate> menuDelegate;
+@property (nonatomic, assign) id<JZMenuDelegate> menuDelegate;
 @property (nonatomic) int currentItemIndex;
-@property (nonatomic, weak) JZMenu *activeSubmenu;
+@property (nonatomic, assign) JZMenu *activeSubmenu;
 @property (nonatomic, assign) JZMenu *parentMenu;
 @property (nonatomic, retain) NSArray *origItems;
+@property (nonatomic, getter = isMenuActive) BOOL menuActive;
 
 - (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 - (void)leftHoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
@@ -100,63 +102,35 @@
     }
 }
 
-- (void)changeDisplayItemWith:(id)displayItemData {
-    CGPoint center = self.displayItem.center;
+- (void)changeItem:(UIView*)item withData:(id)itemData {
+    CGPoint center = item.center;
     [UIView animateWithDuration:kAnimationDuration
                           delay:kAnimationDuration * 2
                         options:UIViewAnimationOptionAllowUserInteraction
                      animations:^{
-                         self.displayItem.alpha = 0;
+                         item.alpha = 0;
                      } completion:^(BOOL finished) {
-                         if (finished) {
-                             if ([self.displayItem isKindOfClass:[UILabel class]]) {
-                                 [(UILabel*)self.displayItem setText:displayItemData];
-//                                 [self.displayItem sizeToFit];
-                                 [self resizeItem:self.displayItem];
-                                 self.displayItem.center = center;
-                             } else if ([self.displayItem isKindOfClass:[UIImageView class]]) {
-                                 [(UIImageView*)self.displayItem setImage:displayItemData];
-                             }
-
-                             [UIView animateWithDuration:kAnimationDuration
-                                              animations:^{
-                                                  self.displayItem.alpha = 1;
-                                              }];
+                         if ([item isKindOfClass:[UILabel class]] && [itemData isKindOfClass:[NSString class]]) {
+                             [(UILabel*)item setText:itemData];
+                             [self resizeItem:item];
+                             item.center = center;
+                         } else if ([item isKindOfClass:[UIImageView class]] && [itemData isKindOfClass:[UIImage class]]) {
+                             [(UIImageView*)item setImage:itemData];
                          }
+                         
+                         [UIView animateWithDuration:kAnimationDuration
+                                          animations:^{
+                                              item.alpha = 1;
+                                          }];
                      }];
 }
 
-- (void)changeHighlightedItemWith:(id)highlightedItemData {
-//     self.highlightedItem = [self configureMainItem:highlightedItemData highlighted:YES];
-    
-    [UIView animateWithDuration:kAnimationDuration
-                          delay:kAnimationDuration
-                        options:UIViewAnimationOptionAllowUserInteraction
-                     animations:^{
-                         self.highlightedItem.alpha = 0;
-                     } completion:^(BOOL finished) {
-                         if (finished) {
-                             if ([self.highlightedItem isKindOfClass:[UILabel class]]) {
-                                 // This still ned fixing
-                                 [(UILabel*)self.highlightedItem setText:highlightedItemData];
+- (void)changeDisplayItemWith:(id)displayItemData {
+    [self changeItem:self.displayItem withData:displayItemData];
+}
 
-//                                 float newX = center.x + (frame.size.width - self.highlightedItem.frame.size.width) / 2;
-//                                 float newY = center.y + (frame.size.height - self.highlightedItem.frame.size.height) / 2;
-//                                 CGPoint newCenter = CGPointMake(newX, newY);
-//                                 diffX -= fabs(center.x - newCenter.x);
-//                                 diffY -= fabs(center.y - newCenter.y);
-//                                 NSLog(@"old frame: %@, new frame: %@", NSStringFromCGRect(frame), NSStringFromCGRect(self.highlightedItem.frame));
-//                                 self.highlightedItem.center = newCenter;
-                             } else if ([self.highlightedItem isKindOfClass:[UIImageView class]]) {
-                                 [(UIImageView*)self.highlightedItem setImage:highlightedItemData];
-                                 
-                             }
-                             [UIView animateWithDuration:kAnimationDuration
-                                              animations:^{
-                                                  self.highlightedItem.alpha = 1;
-                                              }];
-                         }
-                     }];
+- (void)changeHighlightedItemWith:(id)highlightedItemData {
+    [self changeItem:self.highlightedItem withData:highlightedItemData];
 }
 
 #pragma mark - Config
@@ -180,9 +154,9 @@
 }
 
 - (void)resizeItem:(UIView*)item {
-    CGPoint originPoint = [self originPoint];
     CGSize size = CGSizeMake(kStartMenuItemSize, kStartMenuItemSize);
     if ([item isKindOfClass:[UIImageView class]]) {
+        CGPoint originPoint = [self originPointForSize:size];
         [(UIImageView*)item setFrame:CGRectMake(originPoint.x, originPoint.y, size.width, size.height)];
     } else if ([item isKindOfClass:[UILabel class]]) {
         CGRect labelRect = CGRectMake(kMenuItemLabelPadding,
@@ -192,7 +166,9 @@
         item.frame = labelRect;
         [item sizeToFit];
         item.frame = [self addPaddingTo:item.frame];
-        [item setCenter:[self centerPointForOrigin:[self originPoint]]];
+        CGPoint originPoint = [self originPointForSize:item.frame.size];
+//        CGPoint originPoint = [self originPointFor:item];
+        [item setCenter:[self centerPointForOrigin:originPoint andView:item]];
     }
 }
 
@@ -220,27 +196,49 @@
     return item;
 }
 
-- (CGPoint)centerPointForOrigin:(CGPoint)origin {
-    return CGPointMake(origin.x + self.displayItem.frame.size.width / 2, origin.y + self.displayItem.frame.size.height / 2);
+- (CGPoint)centerPointForOrigin:(CGPoint)origin andView:(UIView*)view {
+    return CGPointMake(origin.x + view.frame.size.width / 2, origin.y + view.frame.size.height / 2);
 }
 
-- (CGPoint)originPoint {
+- (CGPoint)originPointForSize:(CGSize)size {
     float x, y;
     
     if (self.position & JZMenuPositionTop && !(self.position & JZMenuPositionBottom)) {
         y = 0;
     } else if (self.position & JZMenuPositionBottom && !(self.position & JZMenuPositionTop)) {
-        y = self.frame.size.height - self.displayItem.frame.size.height;
+        y = self.frame.size.height - size.height;
     } else {
-        y = self.frame.size.height / 2 - self.displayItem.frame.size.height / 2;
+        y = self.frame.size.height / 2 - size.height / 2;
     }
     
     if (self.position & JZMenuPositionLeft && !(self.position & JZMenuPositionRight)) {
         x = 0;
     } else if (self.position & JZMenuPositionRight && !(self.position & JZMenuPositionLeft)) {
-        x = self.frame.size.width - self.displayItem.frame.size.width;
+        x = self.frame.size.width - size.width;
     } else {
-        x = self.frame.size.width / 2 - self.displayItem.frame.size.width / 2;
+        x = self.frame.size.width / 2 - size.width / 2;
+    }
+    
+    return CGPointMake(x, y);
+}
+
+- (CGPoint)originPointFor:(UIView*)view {
+    float x, y;
+    
+    if (self.position & JZMenuPositionTop && !(self.position & JZMenuPositionBottom)) {
+        y = 0;
+    } else if (self.position & JZMenuPositionBottom && !(self.position & JZMenuPositionTop)) {
+        y = self.frame.size.height - view.frame.size.height;
+    } else {
+        y = self.frame.size.height / 2 - view.frame.size.height / 2;
+    }
+    
+    if (self.position & JZMenuPositionLeft && !(self.position & JZMenuPositionRight)) {
+        x = 0;
+    } else if (self.position & JZMenuPositionRight && !(self.position & JZMenuPositionLeft)) {
+        x = self.frame.size.width - view.frame.size.width;
+    } else {
+        x = self.frame.size.width / 2 - view.frame.size.width / 2;
     }
     
     return CGPointMake(x, y);
@@ -466,7 +464,7 @@
         };
         [parentMenu resetMove:YES withCallback:callback];
     } else {
-        [self moveTo:[self centerPointForOrigin:[self originPoint]] animated:animated withCallback:callback];
+        [self moveTo:[self centerPointForOrigin:[self originPointFor:self.displayItem] andView:self.displayItem] animated:animated withCallback:callback];
     }
 }
 
@@ -521,9 +519,7 @@
             // The gesture is long press, just highlight the item
 //            [self highlightMenuItemAtPoint:point];
         }
-        if (self.menuDelegate && [self.menuDelegate respondsToSelector:@selector(menuActivated:)]) {
-            [self.menuDelegate menuActivated:self];
-        }
+    [self activateMenu];
     } else if ((gesture.state == UIGestureRecognizerStateEnded ||
                 gesture.state == UIGestureRecognizerStateCancelled ||
                 gesture.state == UIGestureRecognizerStateFailed) && isHighlighted) { // Only recognize the gesture if the menu item is highlighted
@@ -545,9 +541,7 @@
                     [self.menuDelegate didSelectItemAtIndex:highlightedItemIndex inMenu:self];
             }
         }
-        if (self.menuDelegate && [self.menuDelegate respondsToSelector:@selector(menuDeactivated:)]) {
-            [self.menuDelegate menuDeactivated:self];
-        }
+        [self deactivateMenu];
     } else if (gesture == pan && isHighlighted) {
         point.x += diffX;
         point.y += diffY;
@@ -579,12 +573,14 @@
     self.highlightedItem = nil;
     self.displayItem = nil;
     self.menuView = nil;
+    self.origItems = nil;
 }
 
 #pragma mark - Selecting submenus
 
 - (void)activateSubmenu:(JZMenu*)submenu {
     activeSubmenu = submenu;
+    [activeSubmenu activateMenu];
     activeSubmenu->parentMenu = self;
     [self hideMenu];
     self.highlightedItem.hidden = YES;
@@ -606,7 +602,7 @@
 }
 
 - (void)deactivateSubmenu {
-    NSLog(@"Deactivating submenu");
+//    NSLog(@"Deactivating submenu");
     [activeSubmenu removeFromSuperview];
     activeSubmenu = nil;
 }
@@ -655,6 +651,30 @@
     }
 }
 
+#pragma mark - Delegate stuff
+
+- (void)activateMenu {
+    if (!self.isMenuActive) {
+        self.menuActive = YES;
+        if (self.menuDelegate && [self.menuDelegate respondsToSelector:@selector(menuActivated:)]) {
+            [self.menuDelegate menuActivated:self];
+        }
+    }
+}
+
+- (void)deactivateMenu {
+    if (self.isMenuActive) {
+        // Check parents
+        if (self.parentMenu) {
+            [self.parentMenu deactivateMenu];
+        }
+        self.menuActive = NO;
+        if (self.menuDelegate && [self.menuDelegate respondsToSelector:@selector(menuDeactivated:)]) {
+            [self.menuDelegate menuDeactivated:self];
+        }
+    }
+}
+
 - (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu *)menu {
     // Start timer countdown for selection
     if (![submenuTimer isValid]) {
@@ -677,7 +697,6 @@
         return self;
     
     UIView *hitView = [super hitTest:point withEvent:event];
-    NSLog(@"hitView class: %@", [hitView class]);
     if (hitView == self)
         return nil;
     else
