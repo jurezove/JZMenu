@@ -27,6 +27,8 @@
 #define kLabelFontHighlighted [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:24.0f]
 #define kLabelFont [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:24.0f]
 
+#define kMenuItemActualViewTag 45367
+
 @interface JZMenu() {
     
     BOOL isHighlighted;
@@ -44,10 +46,10 @@
 @property (nonatomic) CGRect parentFrame;
 @property (nonatomic) JZMenuPosition position;
 @property (nonatomic, strong) UIView *menuView;
-@property (nonatomic, assign) id<JZMenuDelegate> menuDelegate;
+@property (nonatomic, weak) id<JZMenuDelegate> menuDelegate;
 @property (nonatomic) int currentItemIndex;
-@property (nonatomic, assign) JZMenu *activeSubmenu;
-@property (nonatomic, assign) JZMenu *parentMenu;
+@property (nonatomic, weak) JZMenu *activeSubmenu;
+@property (nonatomic, weak) JZMenu *parentMenu;
 @property (nonatomic, retain) NSArray *origItems;
 @property (nonatomic, getter = isMenuActive) BOOL menuActive;
 
@@ -282,6 +284,7 @@
         UIImageView *image = [[UIImageView alloc] initWithFrame:imageRect];
         image.image = object;
         image.contentMode = UIViewContentModeCenter;
+        image.tag = kMenuItemActualViewTag;
         [menuItem addSubview:image];
     } else if ([object isKindOfClass:[NSString class]]) {
         CGRect labelRect = CGRectMake(kMenuItemLabelPadding,
@@ -294,6 +297,7 @@
         label.text = object;
         label.backgroundColor = [UIColor clearColor];
         label.textColor = [UIColor blackColor];
+        label.tag = kMenuItemActualViewTag;
         [menuItem addSubview:label];
     } else if ([object isKindOfClass:[JZMenu class]]) {
         // Create a submenu with display item of the object's menu
@@ -305,7 +309,6 @@
         [object setPan:self.pan];
         [menuItem addSubview:[object displayItem]];
     }
-    
     [_menuView addSubview:menuItem];
     [menuItems addObject:menuItem];
 }
@@ -328,6 +331,44 @@
                                   sizeOfMenuItem);
         
         [self createMenuItemWith:[items objectAtIndex:i] andFrame:frame];
+    }
+}
+
+- (BOOL)canReplaceMenuItemView:(UIView*)view withItemData:(id)data {
+    if (([data isKindOfClass:[NSString class]] && [view isKindOfClass:[UILabel class]]) ||
+        ([data isKindOfClass:[UIImage class]] && [view isKindOfClass:[UIImageView class]]))
+        return YES;
+    return NO;
+}
+        
+
+- (void)updateMenuItemView:(UIView*)view withItemData:(id)data {
+    if ([data isKindOfClass:[NSString class]] && [view isKindOfClass:[UILabel class]]) {
+        [(UILabel*)view setText:data];
+    } else if ([data isKindOfClass:[UIImage class]] && [view isKindOfClass:[UIImageView class]]) {
+        [(UIImageView*)view setImage:data];
+    }
+}
+
+- (void)updateMenuItemAtIndex:(NSInteger)index withItemData:(id)data animated:(BOOL)animated {
+    UIView *view = [[menuItems objectAtIndex:index] viewWithTag:kMenuItemActualViewTag];
+    if ([self canReplaceMenuItemView:view withItemData:data]) {
+        if (animated) {
+            [UIView animateWithDuration:kAnimationDuration / 2
+                             animations:^{
+                                 view.alpha = 0;
+                             } completion:^(BOOL finished) {
+                                 [self updateMenuItemView:view withItemData:data];
+                                 [UIView animateWithDuration:kAnimationDuration / 2
+                                                  animations:^{
+                                                      view.alpha = 1.0f;
+                                                  }];
+                             }];
+        } else {
+            [self updateMenuItemView:view withItemData:data];
+        }
+    } else {
+        [self updateMenuItemView:view withItemData:data];
     }
 }
 
@@ -511,7 +552,6 @@
     if (gesture.state == UIGestureRecognizerStateBegan) {
         [self changeSelection:YES];
         if (gesture == pan) {
-            NSLog(@"Gesture began in: %@", self);
             CGPoint pointInSelf = [gesture locationInView:self.displayItem];
             diffX = (self.displayItem.frame.size.width / 2 - pointInSelf.x);
             diffY = (self.displayItem.frame.size.height / 2 - pointInSelf.y);
@@ -602,13 +642,11 @@
 }
 
 - (void)deactivateSubmenu {
-//    NSLog(@"Deactivating submenu");
     [activeSubmenu removeFromSuperview];
     activeSubmenu = nil;
 }
 
 - (void)longHover:(NSTimer*)timer {
-    NSLog(@"Long hover");
      // Get item and handle long press according to class
     NSInteger itemIndex = (NSInteger)[[[timer userInfo] objectForKey:kUserInfoDictKey] intValue];
     

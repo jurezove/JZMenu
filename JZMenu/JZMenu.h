@@ -47,6 +47,7 @@ typedef char JZMenuPosition;
 
 - (void)changeDisplayItemWith:(id)displayItemData;
 - (void)changeHighlightedItemWith:(id)highlightedItemData;
+- (void)updateMenuItemAtIndex:(NSInteger)index withItemData:(id)data animated:(BOOL)animated;
 
 @end
 
