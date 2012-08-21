@@ -20,17 +20,29 @@
 	// Do any additional setup after loading the view.
     self.view.backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.4];
 
+    JZMenu *submenu = [[JZMenu alloc] initWithHighlightedItemData:@"Submenu 1"
+                                                  displayItemData:@"Submenu 1"
+                                                        menuItems:@[@"Item 1", @"Item 2", @"Back", @"Item 1", @"Item 2", @"Back", @"Item 1", @"Item 2", @"Back",
+                       @"Item 1", @"Item 2", @"Back", @"Item 1", @"Item 2", @"Back", @"Item 1", @"Item 2", @"Back",
+                       @"Item 1", @"Item 2", @"Back", @"Item 1", @"Item 2", @"Back", @"Item 1", @"Item 2", @"Back"]
+                                                         position:JZMenuPositionLeft | JZMenuPositionRight
+                                                      parentFrame:self.view.bounds
+                                                     menuDelegate:self
+                                                     transparency:0.2];
+//    [self.view addSubview:submenu];
+
+    
     NSArray *menuImages = [[NSArray alloc] initWithObjects:[UIImage imageNamed:@"Camara"],
                            [UIImage imageNamed:@"Circle-Info"],
-                           //                           [UIImage imageNamed:@"Cloud-Blank"],
                            [UIImage imageNamed:@"Guitar"],
-                           [UIImage imageNamed:@"iPhone"], nil];
+                           [UIImage imageNamed:@"iPhone"], submenu, nil];
     JZMenu *demoMenu = [[JZMenu alloc] initWithHighlightedItemData:@"test"
                                                           displayItemData:@"test 2"
                                                       menuItems:menuImages
                                                         position:JZMenuPositionLeft | JZMenuPositionRight
                                                      parentFrame:self.view.bounds
-                                                    menuDelegate:self];
+                                                    menuDelegate:self
+                                                      transparency:0.2];
     [self.view addSubview:demoMenu];
     
 //    JZMenu *demoMenu2 = [[JZMenu alloc] initWithHighlightedImage:[UIImage imageNamed:@"menu_green_se"]
@@ -40,7 +52,7 @@
 //                                                     parentFrame:CGRectMake(0, 0, 160, 230)
 //                                                    menuDelegate:self];
 //    [self.view addSubview:demoMenu2];
-//    
+//
 //    JZMenu *demoMenu3 = [[JZMenu alloc] initWithHighlightedImage:[UIImage imageNamed:@"menu_purple_se"]
 //                                                           Image:[UIImage imageNamed:@"menu_purple"]
 //                                                      menuImages:menuImages

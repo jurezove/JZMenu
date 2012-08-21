@@ -20,15 +20,17 @@ typedef char JZMenuPosition;
 @class JZMenu;
 @protocol JZMenuDelegate <NSObject>
 
+typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
+
 @optional
-- (BOOL)canSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
-- (void)didSelectItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
+- (BOOL)menu:(JZMenu*)menu canSelectItemAtIndex:(NSInteger)index;
+- (JZMenuDidSelectItemFinishedBlock)menu:(JZMenu*)menu didSelectItemAtIndex:(NSInteger)index;
 - (void)menuActivated:(JZMenu*)menu;
 - (void)menuDeactivated:(JZMenu*)menu;
-- (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
-- (BOOL)animateOnLongHover:(NSInteger)index inMenu:(JZMenu*)menu;
-- (void)longHoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
 - (void)menuTapped:(JZMenu*)menu;
+- (void)menu:(JZMenu*)menu hoverOnItemAtIndex:(NSInteger)index;
+- (BOOL)menu:(JZMenu*)menu animateOnLongHover:(NSInteger)index;
+- (void)menu:(JZMenu*)menu longHoverOnItemAtIndex:(NSInteger)index;
 
 @end
 
@@ -43,11 +45,13 @@ typedef char JZMenuPosition;
                     menuItems:(NSArray*)images
                      position:(JZMenuPosition)menuPosition
                   parentFrame:(CGRect)frame
-                 menuDelegate:(id<JZMenuDelegate>)menuDelegate;
+                 menuDelegate:(id<JZMenuDelegate>)menuDelegate
+                     transparency:(float)alpha;
 
 - (void)changeDisplayItemWith:(id)displayItemData;
 - (void)changeHighlightedItemWith:(id)highlightedItemData;
 - (void)updateMenuItemAtIndex:(NSInteger)index withItemData:(id)data animated:(BOOL)animated;
+- (NSInteger)menuItemCount;
 
 @end
 

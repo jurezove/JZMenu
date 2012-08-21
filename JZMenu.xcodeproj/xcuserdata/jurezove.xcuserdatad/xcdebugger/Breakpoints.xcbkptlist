@@ -8,11 +8,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "JZMenu/JZMenu.m"
-         timestampString = "366416916.357753"
+         timestampString = "367279743.42789"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "543"
-         endingLineNumber = "543"
+         startingLineNumber = "624"
+         endingLineNumber = "624"
          landmarkName = "-moveTo:animated:withCallback:"
          landmarkType = "5">
       </FileBreakpoint>
@@ -21,11 +21,11 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "JZMenu/JZMenu.m"
-         timestampString = "366416916.357753"
+         timestampString = "367279743.42789"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "558"
-         endingLineNumber = "558"
+         startingLineNumber = "638"
+         endingLineNumber = "638"
          landmarkName = "-handleGesture:"
          landmarkType = "5">
       </FileBreakpoint>
@@ -34,12 +34,38 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "JZMenu/JZMenu.m"
-         timestampString = "366416916.357753"
+         timestampString = "367279743.42789"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "557"
-         endingLineNumber = "557"
-         landmarkName = "-handleGesture:"
+         startingLineNumber = "774"
+         endingLineNumber = "774"
+         landmarkName = "-longHover:"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "JZMenu/JZMenu.m"
+         timestampString = "367275371.124246"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "328"
+         endingLineNumber = "328"
+         landmarkName = "-createMenuItemWith:andFrame:"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "No"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "JZMenu/JZMenu.m"
+         timestampString = "367279743.42789"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "611"
+         endingLineNumber = "611"
+         landmarkName = "-moveTo:animated:withCallback:"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>
