@@ -15,7 +15,7 @@
 #define kMenuItemLabelPadding 10.0f
 #define kMenuLabelMargin 25.0f
 #define kMainMenuTransform CGAffineTransformMakeScale(2.0, 2.0)
-#define kMinimumItemHeight 200.0f
+#define kMinimumItemHeight 120.0f
 #define kAutoScrollTreshold 120.0f
 #define kAutoScrollTresholdPercentage 1.4f
 
@@ -96,7 +96,7 @@
         self.origItems = items;
         _currentItemIndex = -1;
         transparency = alpha;
-        [self createMenuWith:items];
+        [self createMenuWith:self.origItems];
         [self config];
     }
     return self;
@@ -143,6 +143,11 @@
 
 - (void)changeHighlightedItemWith:(id)highlightedItemData {
     [self changeItem:self.highlightedItem withData:highlightedItemData];
+}
+
+- (void)replaceMenuItemsWith:(NSArray *)newItems {
+    self.origItems = newItems;
+    [self createMenuWith:self.origItems];
 }
 
 #pragma mark - Config
@@ -469,10 +474,11 @@
 }
 
 - (NSInteger)highlightedItemIndexAt:(CGPoint)point {
+    CGPoint relativePoint = [_menuView convertPoint:point fromView:nil];
     int highlightedItemIndex = -1;
     for (int i = 0; i < menuItems.count; i++) {
         UIView *menuItem = [menuItems objectAtIndex:i];
-        if (CGRectContainsPoint(menuItem.frame, point)) {
+        if (CGRectContainsPoint(menuItem.frame, relativePoint)) {
             highlightedItemIndex = i;
             break;
         }
@@ -481,10 +487,8 @@
 }
 
 - (void)highlightMenuItemAtPoint:(CGPoint)point {
-    CGPoint relativePoint = [_menuView convertPoint:point fromView:nil];
-    
-//    int newHighlightedItemIndex = [self highlightedItemIndexAt:point];
-        int newHighlightedItemIndex = [self highlightedItemIndexAt:relativePoint];
+    int newHighlightedItemIndex = [self highlightedItemIndexAt:point];
+//    int newHighlightedItemIndex = [self highlightedItemIndexAt:relativePoint];
     if (newHighlightedItemIndex != self.currentItemIndex)
         [self layoutMenuItems:newHighlightedItemIndex];
 }

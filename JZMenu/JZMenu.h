@@ -51,6 +51,7 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
 - (void)changeDisplayItemWith:(id)displayItemData;
 - (void)changeHighlightedItemWith:(id)highlightedItemData;
 - (void)updateMenuItemAtIndex:(NSInteger)index withItemData:(id)data animated:(BOOL)animated;
+- (void)replaceMenuItemsWith:(NSArray*)newItems;
 - (NSInteger)menuItemCount;
 
 @end
