@@ -8,14 +8,14 @@
 
 #import "JZMenu.h"
 
-#define kStartMenuItemSize 60.0f
+#define kStartMenuItemSize 90.0f
 #define kAnimationDuration 0.25f
 #define kAnimationDelay 0.1f
-#define kMenuItemImageSize 80.0f
+#define kMenuItemImageSize 90.0f
 #define kMenuItemLabelPadding 10.0f
 #define kMenuLabelMargin 25.0f
 #define kMainMenuTransform CGAffineTransformMakeScale(2.0, 2.0)
-#define kMinimumItemHeight 120.0f
+#define kMinimumItemHeight (480.0f / 5.0f)
 #define kAutoScrollTreshold 120.0f
 #define kAutoScrollTresholdPercentage 1.4f
 
@@ -38,7 +38,6 @@
     
     // Origin difference for smother panning
     float diffX, diffY;
-    NSMutableArray *menuItems;
     
     NSTimer *submenuTimer;
     
@@ -59,6 +58,7 @@
 @property (nonatomic, weak) JZMenu *activeSubmenu;
 @property (nonatomic, weak) JZMenu *parentMenu;
 @property (nonatomic, retain) NSArray *origItems;
+@property (nonatomic, strong) NSMutableArray *menuItems;
 @property (nonatomic, getter = isMenuActive) BOOL menuActive;
 
 - (void)hoverOnItemAtIndex:(NSInteger)index inMenu:(JZMenu*)menu;
@@ -79,6 +79,8 @@
 @synthesize activeSubmenu;
 @synthesize parentMenu;
 @synthesize origItems;
+@synthesize menuItems;
+@synthesize displayItemOffset;
 
 - (id)initWithHighlightedItemData:(id)highlightedData
                   displayItemData:(id)displayData
@@ -88,6 +90,7 @@
                      menuDelegate:(id<JZMenuDelegate>)menuDelegate
                      transparency:(float)alpha {
     if (self = [super initWithFrame:frame]) {
+        self.displayItemOffset = 0;
         self.parentFrame = frame;
         self.position = menuPosition;
         self.menuDelegate = menuDelegate;
@@ -102,6 +105,31 @@
     return self;
 }
 
+- (id)initWithHighlightedItemData:(id)highlightedData
+                  displayItemData:(id)displayData
+                        menuItems:(NSArray *)items
+                         position:(JZMenuPosition)menuPosition
+                      parentFrame:(CGRect)frame
+                     menuDelegate:(id<JZMenuDelegate>)menuDelegate
+                     transparency:(float)alpha
+                displayItemOffset:(float)displayItemOffset_ {
+    if (self = [super initWithFrame:frame]) {
+        self.displayItemOffset = displayItemOffset_;
+        self.parentFrame = frame;
+        self.position = menuPosition;
+        self.menuDelegate = menuDelegate;
+        self.displayItem = [self configureMainItem:displayData highlighted:NO];
+        self.highlightedItem = [self configureMainItem:highlightedData highlighted:YES];
+        self.origItems = items;
+        _currentItemIndex = -1;
+        transparency = alpha;
+        [self createMenuWith:self.origItems];
+        [self config];
+    }
+    return self;
+}
+
+
 - (void)setCurrentItemIndex:(int)currentItemIndex {
     if (_currentItemIndex != currentItemIndex && currentItemIndex >= 0 && currentItemIndex < menuItems.count) {
         // Handle hovering
@@ -114,38 +142,49 @@
     }
 }
 
-- (void)changeItem:(UIView*)item withData:(id)itemData {
+- (void)changeItem:(UIView*)item withData:(id)itemData animated:(BOOL)animated {
     CGPoint center = item.center;
-    [UIView animateWithDuration:kAnimationDuration
-                          delay:kAnimationDuration * 2
-                        options:UIViewAnimationOptionAllowUserInteraction
-                     animations:^{
-                         item.alpha = 0;
-                     } completion:^(BOOL finished) {
-                         if ([item isKindOfClass:[UILabel class]] && [itemData isKindOfClass:[NSString class]]) {
-                             [(UILabel*)item setText:itemData];
-                             [self resizeItem:item];
-                             item.center = center;
-                         } else if ([item isKindOfClass:[UIImageView class]] && [itemData isKindOfClass:[UIImage class]]) {
-                             [(UIImageView*)item setImage:itemData];
-                         }
-                         
-                         [UIView animateWithDuration:kAnimationDuration
-                                          animations:^{
-                                              item.alpha = 1;
-                                          }];
-                     }];
+    if (animated) {
+        [UIView animateWithDuration:kAnimationDuration
+                              delay:kAnimationDuration * 2
+                            options:UIViewAnimationOptionAllowUserInteraction
+                         animations:^{
+                             item.alpha = 0;
+                         } completion:^(BOOL finished) {
+                             if ([item isKindOfClass:[UILabel class]] && [itemData isKindOfClass:[NSString class]]) {
+                                 [(UILabel*)item setText:itemData];
+                                 [self resizeItem:item];
+                                 item.center = center;
+                             } else if ([item isKindOfClass:[UIImageView class]] && [itemData isKindOfClass:[UIImage class]]) {
+                                 [(UIImageView*)item setImage:itemData];
+                             }
+                             
+                             [UIView animateWithDuration:kAnimationDuration
+                                              animations:^{
+                                                  item.alpha = 1;
+                                              }];
+                         }];
+    } else {
+        if ([item isKindOfClass:[UILabel class]] && [itemData isKindOfClass:[NSString class]]) {
+            [(UILabel*)item setText:itemData];
+            [self resizeItem:item];
+            item.center = center;
+        } else if ([item isKindOfClass:[UIImageView class]] && [itemData isKindOfClass:[UIImage class]]) {
+            [(UIImageView*)item setImage:itemData];
+        }
+    }
 }
 
-- (void)changeDisplayItemWith:(id)displayItemData {
-    [self changeItem:self.displayItem withData:displayItemData];
+- (void)changeDisplayItemWith:(id)displayItemData animated:(BOOL)animated {
+    [self changeItem:self.displayItem withData:displayItemData animated:animated];
 }
 
-- (void)changeHighlightedItemWith:(id)highlightedItemData {
-    [self changeItem:self.highlightedItem withData:highlightedItemData];
+- (void)changeHighlightedItemWith:(id)highlightedItemData animated:(BOOL)animated {
+    [self changeItem:self.highlightedItem withData:highlightedItemData animated:animated];
 }
 
 - (void)replaceMenuItemsWith:(NSArray *)newItems {
+    self.origItems = nil;
     self.origItems = newItems;
     [self createMenuWith:self.origItems];
 }
@@ -214,24 +253,41 @@
 }
 
 - (CGPoint)centerPointForOrigin:(CGPoint)origin andView:(UIView*)view {
-    return CGPointMake(origin.x + view.frame.size.width / 2, origin.y + view.frame.size.height / 2);
+    float x, y;
+    if (self.position & JZMenuPositionTop && !(self.position & JZMenuPositionBottom)) {
+        y = origin.y - displayItemOffset;
+    } else if (self.position & JZMenuPositionBottom && !(self.position & JZMenuPositionTop)) {
+        y = origin.y + displayItemOffset;
+    } else {
+        y = origin.y;
+    }
+    
+    if (self.position & JZMenuPositionLeft && !(self.position & JZMenuPositionRight)) {
+        x = origin.x - displayItemOffset;
+    } else if (self.position & JZMenuPositionRight && !(self.position & JZMenuPositionLeft)) {
+        x = origin.x + displayItemOffset;
+    } else {
+        x = origin.x;
+    }
+        
+    return CGPointMake(x+ view.frame.size.width / 2, y + view.frame.size.height / 2);
 }
 
 - (CGPoint)originPointForSize:(CGSize)size {
     float x, y;
     
     if (self.position & JZMenuPositionTop && !(self.position & JZMenuPositionBottom)) {
-        y = 0;
+        y = 0 - displayItemOffset;
     } else if (self.position & JZMenuPositionBottom && !(self.position & JZMenuPositionTop)) {
-        y = self.frame.size.height - size.height;
+        y = self.frame.size.height - size.height + displayItemOffset;
     } else {
         y = self.frame.size.height / 2 - size.height / 2;
     }
     
     if (self.position & JZMenuPositionLeft && !(self.position & JZMenuPositionRight)) {
-        x = 0;
+        x = 0 - displayItemOffset;
     } else if (self.position & JZMenuPositionRight && !(self.position & JZMenuPositionLeft)) {
-        x = self.frame.size.width - size.width;
+        x = self.frame.size.width - size.width + displayItemOffset;
     } else {
         x = self.frame.size.width / 2 - size.width / 2;
     }
@@ -281,9 +337,6 @@
     [self addGestureRecognizer:tap];
     
     self.backgroundColor = [UIColor clearColor];
-    
-    // Display link
-    displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateScroll)];
 
 }
 
@@ -315,9 +368,9 @@
         UILabel *label = [[UILabel alloc] initWithFrame:labelRect];
         label.font = kLabelFont;
         label.textAlignment = UITextAlignmentCenter;
-        label.text = object;
+        label.text = [NSString stringWithFormat:@"%@", object];
         label.backgroundColor = [UIColor clearColor];
-        label.textColor = [UIColor whiteColor];
+        label.textColor = [UIColor blackColor];
         label.tag = kMenuItemActualViewTag;
         [menuItem addSubview:label];
     } else if ([object isKindOfClass:[JZMenu class]]) {
@@ -332,7 +385,7 @@
         [object displayItem].alpha = 1.0f;
         [menuItem addSubview:[object displayItem]];
     }
-    [_menuView addSubview:menuItem];
+    [self.menuView addSubview:menuItem];
     [menuItems addObject:menuItem];
 }
 
@@ -340,16 +393,17 @@
     float sizeOfMenuItem = (float)self.frame.size.height / items.count;
     if (sizeOfMenuItem < kMinimumItemHeight) {
         sizeOfMenuItem = kMinimumItemHeight;
-        _menuView = [[UIScrollView alloc] initWithFrame:self.bounds];
-        [(UIScrollView*)_menuView setContentSize:CGSizeMake(_menuView.frame.size.width, sizeOfMenuItem * items.count)];
+        self.menuView = [[UIScrollView alloc] initWithFrame:self.bounds];
+        [(UIScrollView*)self.menuView setContentSize:CGSizeMake(self.menuView.frame.size.width, sizeOfMenuItem * items.count)];
+        displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateScroll)];
     } else {
-        _menuView = [[UIView alloc] initWithFrame:self.bounds];
+        self.menuView = [[UIView alloc] initWithFrame:self.bounds];
     }
     
-    _menuView.backgroundColor = [UIColor clearColor];
-    _menuView.hidden = YES;
-    [self addSubview:_menuView];
-    [self sendSubviewToBack:_menuView];
+    self.menuView.backgroundColor = [UIColor clearColor];
+    self.menuView.hidden = YES;
+    [self addSubview:self.menuView];
+    [self sendSubviewToBack:self.menuView];
     
     // Menu items
     menuItems = [[NSMutableArray alloc] initWithCapacity:items.count];
@@ -420,25 +474,25 @@
 
 - (void)updateScroll {
     //    NSLog(@"Updating scroll: %f", dAutoScroll);
-    CGPoint offset = [(UIScrollView*)_menuView contentOffset];
+    CGPoint offset = [(UIScrollView*)self.menuView contentOffset];
     // FIX dAutoScroll
     NSLog(@"Offset: %f", dAutoScroll);
     if (dAutoScroll > 0) {
-        if (offset.y + dAutoScroll + [(UIScrollView*)_menuView frame].size.height < [(UIScrollView*)_menuView contentSize].height) {
+        if (offset.y + dAutoScroll + [(UIScrollView*)self.menuView frame].size.height < [(UIScrollView*)self.menuView contentSize].height) {
             offset.y+=dAutoScroll;
-            [(UIScrollView*)_menuView setContentOffset:offset animated:NO];
+            [(UIScrollView*)self.menuView setContentOffset:offset animated:NO];
         } else {
-            offset.y = [(UIScrollView*)_menuView contentSize].height - _menuView.frame.size.height;
-            [(UIScrollView*)_menuView setContentOffset:offset animated:NO];
+            offset.y = [(UIScrollView*)self.menuView contentSize].height - self.menuView.frame.size.height;
+            [(UIScrollView*)self.menuView setContentOffset:offset animated:NO];
             [self disableAutoScroll];
         }
     } else {
         if (offset.y + dAutoScroll > 0) {
             offset.y+=dAutoScroll;
-            [(UIScrollView*)_menuView setContentOffset:offset animated:NO];
+            [(UIScrollView*)self.menuView setContentOffset:offset animated:NO];
         } else {
             offset.y = 0;
-            [(UIScrollView*)_menuView setContentOffset:offset animated:NO];
+            [(UIScrollView*)self.menuView setContentOffset:offset animated:NO];
             [self disableAutoScroll];
         }
     }
@@ -466,15 +520,19 @@
                      } completion:^(BOOL finished) {
                          if (finished) {
                              [self menuView].hidden = YES;
-                             [_menuView removeFromSuperview];
-                             _menuView = nil;
+                             UIView *v = [self.menuView viewWithTag:kMenuItemActualViewTag];
+                             [v removeFromSuperview];
+                             [menuItems removeAllObjects];
+                             menuItems = nil;
+                             [self.menuView removeFromSuperview];
+                             self.menuView = nil;
                              [self createMenuWith:origItems];
                          }
                      }];
 }
 
 - (NSInteger)highlightedItemIndexAt:(CGPoint)point {
-    CGPoint relativePoint = [_menuView convertPoint:point fromView:nil];
+    CGPoint relativePoint = [self.menuView convertPoint:point fromView:nil];
     int highlightedItemIndex = -1;
     for (int i = 0; i < menuItems.count; i++) {
         UIView *menuItem = [menuItems objectAtIndex:i];
@@ -488,7 +546,6 @@
 
 - (void)highlightMenuItemAtPoint:(CGPoint)point {
     int newHighlightedItemIndex = [self highlightedItemIndexAt:point];
-//    int newHighlightedItemIndex = [self highlightedItemIndexAt:relativePoint];
     if (newHighlightedItemIndex != self.currentItemIndex)
         [self layoutMenuItems:newHighlightedItemIndex];
 }
@@ -610,11 +667,11 @@
                 callback(YES);
             
             // Scrollview
-            if ([_menuView isKindOfClass:[UIScrollView class]]) {
-                if (point.y >= self.bounds.size.height - kAutoScrollTreshold && [(UIScrollView*)_menuView contentOffset].y + _menuView.bounds.size.height < [(UIScrollView*)_menuView contentSize].height) {
+            if ([self.menuView isKindOfClass:[UIScrollView class]]) {
+                if (point.y >= self.bounds.size.height - kAutoScrollTreshold && [(UIScrollView*)self.menuView contentOffset].y + self.menuView.bounds.size.height < [(UIScrollView*)self.menuView contentSize].height) {
                     dAutoScroll = (kAutoScrollTreshold*kAutoScrollTresholdPercentage - (self.bounds.size.height - point.y)) / 10;
                     [self enableAutoScroll];
-                } else if (point.y <= kAutoScrollTreshold && [(UIScrollView*)_menuView contentOffset].y > 0) {
+                } else if (point.y <= kAutoScrollTreshold && [(UIScrollView*)self.menuView contentOffset].y > 0) {
                     dAutoScroll = -(kAutoScrollTreshold*kAutoScrollTresholdPercentage - point.y) / 10;
                     [self enableAutoScroll];
                 }
@@ -706,12 +763,12 @@
 }
 
 - (void)dealloc {
-    [menuItems removeAllObjects];
-    menuItems = nil;
-    self.highlightedItem = nil;
-    self.displayItem = nil;
-    self.menuView = nil;
-    self.origItems = nil;
+//    [menuItems removeAllObjects];
+//    menuItems = nil;
+//    self.highlightedItem = nil;
+//    self.displayItem = nil;
+//    self.menuView = nil;
+//    self.origItems = nil;
 }
 
 #pragma mark - Selecting submenus
@@ -744,6 +801,7 @@
     
     [activeSubmenu highlightedItem].center = newCenter;
     [activeSubmenu displayItem].center = newCenter;
+    [activeSubmenu displayItem].hidden = YES;
 
     CGPoint highlightedItemPoint = [activeSubmenu highlightedItem].center;
     [activeSubmenu highlightMenuItemAtPoint:highlightedItemPoint];
@@ -815,6 +873,9 @@
 }
 
 - (void)deactivateMenu {
+    [displayLink invalidate];
+    displayLink = nil;
+    
     if (self.isMenuActive) {
         // Check parents
         if (self.parentMenu) {

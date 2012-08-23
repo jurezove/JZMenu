@@ -39,6 +39,7 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
 @property (nonatomic, strong) UILongPressGestureRecognizer *longPress;
 @property (nonatomic, strong) UIPanGestureRecognizer *pan;
 @property (nonatomic, strong) UITapGestureRecognizer *tap;
+@property (nonatomic) float displayItemOffset;
 
 - (id)initWithHighlightedItemData:(id)highlightedItem
                   displayItemData:(id)displayItem
@@ -48,8 +49,17 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
                  menuDelegate:(id<JZMenuDelegate>)menuDelegate
                      transparency:(float)alpha;
 
-- (void)changeDisplayItemWith:(id)displayItemData;
-- (void)changeHighlightedItemWith:(id)highlightedItemData;
+- (id)initWithHighlightedItemData:(id)highlightedItem
+                  displayItemData:(id)displayItem
+                        menuItems:(NSArray*)images
+                         position:(JZMenuPosition)menuPosition
+                      parentFrame:(CGRect)frame
+                     menuDelegate:(id<JZMenuDelegate>)menuDelegate
+                     transparency:(float)alpha
+                displayItemOffset:(float)displayItemOffset;
+
+- (void)changeDisplayItemWith:(id)displayItemData animated:(BOOL)animated;
+- (void)changeHighlightedItemWith:(id)highlightedItemData animated:(BOOL)animated;
 - (void)updateMenuItemAtIndex:(NSInteger)index withItemData:(id)data animated:(BOOL)animated;
 - (void)replaceMenuItemsWith:(NSArray*)newItems;
 - (NSInteger)menuItemCount;

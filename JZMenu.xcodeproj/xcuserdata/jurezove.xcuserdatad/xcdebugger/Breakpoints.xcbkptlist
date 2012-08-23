@@ -26,7 +26,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "638"
          endingLineNumber = "638"
-         landmarkName = "-handleGesture:"
+         landmarkName = "-gesturesNotIdle"
          landmarkType = "5">
       </FileBreakpoint>
       <FileBreakpoint
