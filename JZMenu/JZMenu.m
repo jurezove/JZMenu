@@ -585,11 +585,6 @@
             return;
         isHighlighted = YES;
         
-        // Check if we can activate the menu
-        if (([self.menuDelegate respondsToSelector:@selector(canActivateMenu:)] && ![self.menuDelegate canActivateMenu:self]))
-            return;
-        
-        
         [self showMenu];
         self.highlightedItem.alpha = 0;
         self.highlightedItem.hidden = NO;
@@ -708,6 +703,10 @@
         [activeSubmenu handleGesture:gesture];
         return;
     }
+    
+    // Check if we can activate the menu
+    if (([self.menuDelegate respondsToSelector:@selector(canActivateMenu:)] && ![self.menuDelegate canActivateMenu:self]))
+        return;
     
     CGPoint point = [gesture locationInView:self];
     point.x += diffX;
