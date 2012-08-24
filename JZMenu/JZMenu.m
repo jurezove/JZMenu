@@ -14,7 +14,7 @@
 #define kMenuItemImageSize 90.0f
 #define kMenuItemLabelPadding 10.0f
 #define kMenuLabelMargin 25.0f
-#define kMainMenuTransform CGAffineTransformMakeScale(2.0, 2.0)
+#define kMainMenuTransform CGAffineTransformMakeScale(1.5, 1.5)
 #define kMinimumItemHeight (480.0f / 5.0f)
 #define kAutoScrollTreshold 120.0f
 #define kAutoScrollTresholdPercentage 1.4f
@@ -25,6 +25,7 @@
 #define kMenuHighlightedColor RGB(150, 150, 150, 0.9)
 #define kMenuBlinkColor RGB(255, 255, 255, 1.0f)
 #define kMenuCantHighlightColor RGB(255, 0, 0, 0.5)
+#define kMenuItemTextColor RGB (255, 255, 255, 1)
 #define kSubmenuTimerInterval 1.0f
 #define kUserInfoDictKey @"menuItem"
 #define kLabelFontHighlighted [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:24.0f]
@@ -139,7 +140,8 @@
         
         if ([self.menuDelegate respondsToSelector:@selector(menu:hoverOnItemAtIndex:)])
             [self.menuDelegate menu:self hoverOnItemAtIndex:_currentItemIndex];
-    }
+    } else if (currentItemIndex == -1)
+        _currentItemIndex = -1;
 }
 
 - (void)changeItem:(UIView*)item withData:(id)itemData animated:(BOOL)animated {
@@ -241,6 +243,7 @@
             [(UILabel*)item setFont:kLabelFontHighlighted];
         else
             [(UILabel*)item setFont:kLabelFont];
+        [(UILabel*)item setTextColor:kMenuItemTextColor];
         [(UILabel*)item setTextAlignment:[self alignmentForPosition]];
         [(UILabel*)item setText:data];
         [self addSubview:item];
@@ -370,7 +373,7 @@
         label.textAlignment = UITextAlignmentCenter;
         label.text = [NSString stringWithFormat:@"%@", object];
         label.backgroundColor = [UIColor clearColor];
-        label.textColor = [UIColor blackColor];
+        label.textColor = kMenuItemTextColor;
         label.tag = kMenuItemActualViewTag;
         [menuItem addSubview:label];
     } else if ([object isKindOfClass:[JZMenu class]]) {
@@ -473,10 +476,8 @@
 }
 
 - (void)updateScroll {
-    //    NSLog(@"Updating scroll: %f", dAutoScroll);
     CGPoint offset = [(UIScrollView*)self.menuView contentOffset];
-    // FIX dAutoScroll
-    NSLog(@"Offset: %f", dAutoScroll);
+//    NSLog(@"Offset: %f", dAutoScroll);
     if (dAutoScroll > 0) {
         if (offset.y + dAutoScroll + [(UIScrollView*)self.menuView frame].size.height < [(UIScrollView*)self.menuView contentSize].height) {
             offset.y+=dAutoScroll;
@@ -548,6 +549,8 @@
     int newHighlightedItemIndex = [self highlightedItemIndexAt:point];
     if (newHighlightedItemIndex != self.currentItemIndex)
         [self layoutMenuItems:newHighlightedItemIndex];
+    if (newHighlightedItemIndex == -1)
+        self.currentItemIndex = -1;
 }
 
 - (void)layoutMenuItems:(NSInteger)highlightedItemIndex {
@@ -581,6 +584,11 @@
         if (isHighlighted)
             return;
         isHighlighted = YES;
+        
+        // Check if we can activate the menu
+        if (([self.menuDelegate respondsToSelector:@selector(canActivateMenu:)] && ![self.menuDelegate canActivateMenu:self]))
+            return;
+        
         
         [self showMenu];
         self.highlightedItem.alpha = 0;
@@ -702,6 +710,8 @@
     }
     
     CGPoint point = [gesture locationInView:self];
+    point.x += diffX;
+    point.y += diffY;
     if (gesture.state == UIGestureRecognizerStateBegan) {
         [self changeSelection:YES];
         if (gesture == pan) {
@@ -738,8 +748,8 @@
         [self resetMove:YES withCallback:finishedBlock];
         [self deactivateMenu];
     } else if (gesture == pan && isHighlighted) {
-        point.x += diffX;
-        point.y += diffY;
+//        point.x += diffX;
+//        point.y += diffY;
         [self moveTo:point animated:NO withCallback:nil];
     }
 }
@@ -818,6 +828,8 @@
      // Get item and handle long press according to class
     NSInteger itemIndex = (NSInteger)[[[timer userInfo] objectForKey:kUserInfoDictKey] intValue];
     
+    if ([self.menuDelegate respondsToSelector:@selector(menu:canLongHoverOnItemAtIndex:)] && ![self.menuDelegate menu:self canLongHoverOnItemAtIndex:itemIndex])
+        return;
     UIView *menuItem = [menuItems objectAtIndex:itemIndex];
     id menu = [origItems objectAtIndex:itemIndex];
     if ([menu isKindOfClass:[JZMenu class]]) {

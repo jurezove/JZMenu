@@ -24,6 +24,7 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
 
 @optional
 - (BOOL)menu:(JZMenu*)menu canSelectItemAtIndex:(NSInteger)index;
+- (BOOL)menu:(JZMenu*)menu canLongHoverOnItemAtIndex:(NSInteger)index;
 - (JZMenuDidSelectItemFinishedBlock)menu:(JZMenu*)menu didSelectItemAtIndex:(NSInteger)index;
 - (void)menuActivated:(JZMenu*)menu;
 - (void)menuDeactivated:(JZMenu*)menu;
@@ -31,6 +32,7 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
 - (void)menu:(JZMenu*)menu hoverOnItemAtIndex:(NSInteger)index;
 - (BOOL)menu:(JZMenu*)menu animateOnLongHover:(NSInteger)index;
 - (void)menu:(JZMenu*)menu longHoverOnItemAtIndex:(NSInteger)index;
+- (BOOL)canActivateMenu:(JZMenu*)menu;
 
 @end
 
