@@ -42,6 +42,10 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
 @property (nonatomic, strong) UIPanGestureRecognizer *pan;
 @property (nonatomic, strong) UITapGestureRecognizer *tap;
 @property (nonatomic) float displayItemOffset;
+@property (nonatomic, strong) UIColor *textColor;
+@property (nonatomic, strong) UIColor *highlightedItemBackgroundColor;
+@property (nonatomic, strong) UIColor *cantHighlightItemBackgroundColor;
+@property (nonatomic, strong) UIColor *blinkColor;
 
 - (id)initWithHighlightedItemData:(id)highlightedItem
                   displayItemData:(id)displayItem
@@ -59,6 +63,16 @@ typedef void (^JZMenuDidSelectItemFinishedBlock)(BOOL);
                      menuDelegate:(id<JZMenuDelegate>)menuDelegate
                      transparency:(float)alpha
                 displayItemOffset:(float)displayItemOffset;
+
+- (id)initWithHighlightedItemData:(id)highlightedData
+                  displayItemData:(id)displayData
+                        menuItems:(NSArray *)items
+                         position:(JZMenuPosition)menuPosition
+                      parentFrame:(CGRect)frame
+                     menuDelegate:(id<JZMenuDelegate>)menuDelegate
+                     transparency:(float)alpha
+                displayItemOffset:(float)displayItemOffset_
+                        textColor:(UIColor*)textColor_;
 
 - (void)changeDisplayItemWith:(id)displayItemData animated:(BOOL)animated;
 - (void)changeHighlightedItemWith:(id)highlightedItemData animated:(BOOL)animated;

@@ -82,6 +82,10 @@
 @synthesize origItems;
 @synthesize menuItems;
 @synthesize displayItemOffset;
+@synthesize highlightedItemBackgroundColor;
+@synthesize cantHighlightItemBackgroundColor;
+@synthesize blinkColor;
+@synthesize textColor;
 
 - (id)initWithHighlightedItemData:(id)highlightedData
                   displayItemData:(id)displayData
@@ -98,6 +102,10 @@
         self.displayItem = [self configureMainItem:displayData highlighted:NO];
         self.highlightedItem = [self configureMainItem:highlightedData highlighted:YES];
         self.origItems = items;
+        self.highlightedItemBackgroundColor = kMenuHighlightedColor;
+        self.cantHighlightItemBackgroundColor = kMenuCantHighlightColor;
+        self.blinkColor = kMenuBlinkColor;
+        self.textColor = kMenuItemTextColor;
         _currentItemIndex = -1;
         transparency = alpha;
         [self createMenuWith:self.origItems];
@@ -121,6 +129,39 @@
         self.menuDelegate = menuDelegate;
         self.displayItem = [self configureMainItem:displayData highlighted:NO];
         self.highlightedItem = [self configureMainItem:highlightedData highlighted:YES];
+        self.highlightedItemBackgroundColor = kMenuHighlightedColor;
+        self.cantHighlightItemBackgroundColor = kMenuCantHighlightColor;
+        self.blinkColor = kMenuBlinkColor;
+        self.textColor = kMenuItemTextColor;
+        self.origItems = items;
+        _currentItemIndex = -1;
+        transparency = alpha;
+        [self createMenuWith:self.origItems];
+        [self config];
+    }
+    return self;
+}
+
+- (id)initWithHighlightedItemData:(id)highlightedData
+                  displayItemData:(id)displayData
+                        menuItems:(NSArray *)items
+                         position:(JZMenuPosition)menuPosition
+                      parentFrame:(CGRect)frame
+                     menuDelegate:(id<JZMenuDelegate>)menuDelegate
+                     transparency:(float)alpha
+                displayItemOffset:(float)displayItemOffset_
+                        textColor:(UIColor*)textColor_ {
+    if (self = [super initWithFrame:frame]) {
+        self.displayItemOffset = displayItemOffset_;
+        self.parentFrame = frame;
+        self.position = menuPosition;
+        self.menuDelegate = menuDelegate;
+        self.displayItem = [self configureMainItem:displayData highlighted:NO];
+        self.highlightedItem = [self configureMainItem:highlightedData highlighted:YES];
+        self.highlightedItemBackgroundColor = kMenuHighlightedColor;
+        self.cantHighlightItemBackgroundColor = kMenuCantHighlightColor;
+        self.blinkColor = kMenuBlinkColor;
+        self.textColor = textColor_;
         self.origItems = items;
         _currentItemIndex = -1;
         transparency = alpha;
@@ -239,11 +280,14 @@
     } else if ([data isKindOfClass:[NSString class]]) {
         item = [[UILabel alloc] init];
         item.backgroundColor = [UIColor clearColor];
-        if (highlighted)
+        if (highlighted) {
             [(UILabel*)item setFont:kLabelFontHighlighted];
-        else
+            [(UILabel*)item setTextColor:self.textColor];
+        } else {
             [(UILabel*)item setFont:kLabelFont];
-        [(UILabel*)item setTextColor:kMenuItemTextColor];
+            [(UILabel*)item setTextColor:self.textColor];
+        }
+        
         [(UILabel*)item setTextAlignment:[self alignmentForPosition]];
         [(UILabel*)item setText:data];
         [self addSubview:item];
@@ -373,7 +417,7 @@
         label.textAlignment = UITextAlignmentCenter;
         label.text = [NSString stringWithFormat:@"%@", object];
         label.backgroundColor = [UIColor clearColor];
-        label.textColor = kMenuItemTextColor;
+        label.textColor = self.textColor;
         label.tag = kMenuItemActualViewTag;
         [menuItem addSubview:label];
     } else if ([object isKindOfClass:[JZMenu class]]) {
@@ -386,6 +430,9 @@
         [object setPan:self.pan];
         [object displayItem].hidden = NO;
         [object displayItem].alpha = 1.0f;
+        if ([[object displayItem] isKindOfClass:[UILabel class]])
+            [(UILabel*)[object displayItem] setTextColor:self.textColor];
+        
         [menuItem addSubview:[object displayItem]];
     }
     [self.menuView addSubview:menuItem];
@@ -564,9 +611,9 @@
                                                                     [self.menuDelegate respondsToSelector:@selector(menu:canSelectItemAtIndex:)] &&
                                      [self.menuDelegate menu:self canSelectItemAtIndex:highlightedItemIndex]) ||
                                                                    ![self.menuDelegate respondsToSelector:@selector(menu:canSelectItemAtIndex:)]) ) {
-                                     [(UIView*)[menuItems objectAtIndex:i] setBackgroundColor:kMenuHighlightedColor];
+                                     [(UIView*)[menuItems objectAtIndex:i] setBackgroundColor:self.highlightedItemBackgroundColor];
                                  } else {
-                                     [(UIView*)[menuItems objectAtIndex:i] setBackgroundColor:kMenuCantHighlightColor];
+                                     [(UIView*)[menuItems objectAtIndex:i] setBackgroundColor:self.cantHighlightItemBackgroundColor];
                                  }
                              } else {
 //                                 [(UIView*)[menuItems objectAtIndex:i] setBackgroundColor:kMenuColor];
@@ -838,7 +885,7 @@
                             options:UIViewAnimationOptionRepeat
                          animations:^{
                              [UIView setAnimationRepeatCount:2.0f];
-                             menuItem.backgroundColor = kMenuBlinkColor;
+                             menuItem.backgroundColor = self.blinkColor;
                              menuItem.backgroundColor = originalColor;
                          } completion:^(BOOL finished) {
                              if (submenuTimer && finished)
